@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VT Checker</title>
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--ink:#12201a;--mute:#5f6f67;--line:#dbe3de;--g:#0e7a57;--gd:#0a5b41;--gl:#e4f4ec;--on:#fff;
+--clean:#0e7a57;--cleanbg:#dff3ea;--med:#9a6200;--medbg:#fff0cc;--high:#b84a0a;--highbg:#ffe2d1;--crit:#a3162a;--critbg:#fbdadf;--na:#53606a;--nabg:#e6eaed}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1512;--card:#151e1a;--ink:#e4efe9;--mute:#8da298;--line:#26332d;--g:#3fcf9b;--gd:#7fe3bd;--gl:#17352a;--on:#08140f;
+--clean:#6fe0b2;--cleanbg:#14352a;--med:#f2c25e;--medbg:#3a2d0e;--high:#ff9a63;--highbg:#3e2314;--crit:#ff8e9c;--critbg:#401a21;--na:#a5b3bc;--nabg:#222c32}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{height:100%;max-width:780px;margin:0 auto;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--g);color:var(--on);display:grid;place-items:center;font-size:.8rem;font-weight:800}
+.hr{display:flex;align-items:center;gap:8px;position:relative}
+.pill,summary{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--card);color:var(--mute);border-radius:99px;padding:5px 12px;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+.pill b{color:var(--g)}
+.pop{position:absolute;right:0;top:calc(100% + 8px);z-index:5;width:270px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px;font-size:.88rem;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.pop label{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.pop input[type=number]{width:70px}
+.pop input[type=checkbox]{width:auto;accent-color:var(--g)}
+input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+:focus-visible{outline:2px solid var(--g);outline-offset:2px}
+#chat{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:14px}
+.m{display:flex;gap:10px;max-width:92%}
+.m.bot{align-self:flex-start}.m.user{align-self:flex-end;flex-direction:row-reverse}
+.av{flex:none;width:28px;height:28px;border-radius:50%;background:var(--g);color:var(--on);font-size:.68rem;font-weight:800;display:grid;place-items:center;margin-top:2px}
+.bub{background:var(--card);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:10px 14px;min-width:0;overflow-wrap:anywhere}
+.m.user .bub{background:var(--g);color:var(--on);border-color:var(--g);border-radius:16px 4px 16px 16px;white-space:pre-wrap}
+.bub p{margin:0 0 8px}.bub p:last-child{margin:0}
+.mute{color:var(--mute);font-size:.88rem}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:var(--bg);padding:1px 5px;border-radius:5px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chipbtn,.dl{font:inherit;font-size:.88rem;font-weight:600;border:1px solid var(--g);color:var(--g);background:none;border-radius:99px;padding:6px 14px;cursor:pointer}
+.chipbtn:hover{background:var(--gl)}
+.dl{background:var(--g);color:var(--on);margin-top:10px}
+.dl.stop{background:none;color:var(--g)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+.row:first-of-type{margin-top:8px}
+.row .v{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;flex:1 1 200px;min-width:0}
+.row .meta{color:var(--mute);font-size:.82rem}
+.tag{display:inline-block;font-weight:700;font-size:.8rem;border-radius:99px;padding:2px 11px}
+.Clean{background:var(--cleanbg);color:var(--clean)}.Medium{background:var(--medbg);color:var(--med)}
+.High{background:var(--highbg);color:var(--high)}.Critical{background:var(--critbg);color:var(--crit)}
+.Other{background:var(--nabg);color:var(--na)}
+.sum{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0}
+.bar div{height:100%;width:0;background:var(--g);transition:width .3s}
+a{color:var(--g)}
+footer{padding:10px 18px calc(12px + env(safe-area-inset-bottom))}
+form{display:flex;gap:8px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:6px 6px 6px 8px}
+form:focus-within{border-color:var(--g)}
+form textarea,form input#key{flex:1;border:0;background:none;padding:9px 6px;resize:none;max-height:150px;outline:none}
+.ib{flex:none;width:38px;height:38px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:none;color:var(--mute)}
+.ib:hover{background:var(--gl);color:var(--g)}
+#send{background:var(--g);color:var(--on)}#send:hover{background:var(--gd);color:var(--on)}
+.ib:disabled{opacity:.4;cursor:not-allowed}
+.fine{margin:8px 6px 0;text-align:center;color:var(--mute);font-size:.78rem}
+#over{position:fixed;inset:0;display:none;place-items:center;background:rgba(14,21,18,.55);color:#fff;font-size:1.1rem;font-weight:600;z-index:9}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><span class="logo">VT</span>VT Checker</div>
+    <div class="hr">
+      <button class="pill" id="keypill" hidden>API key <b>set</b></button>
+      <details id="set"><summary aria-label="Settings">Settings</summary>
+        <div class="pop">
+          <label>Requests per minute <input type="number" id="rpm" min="1" max="500" value="4"></label>
+          <label>Skip Excel rows that already have a severity <input type="checkbox" id="skip" checked></label>
+          <label>Remember my key on this device <input type="checkbox" id="remember"></label>
+          <button class="chipbtn" id="forget" type="button">Forget my API key</button>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <main id="chat" aria-live="polite"></main>
+
+  <footer>
+    <form id="form" autocomplete="off">
+      <button type="button" class="ib" id="attach" aria-label="Attach Excel file" title="Attach Excel file">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.4-8.4"/></svg>
+      </button>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+      <input id="key" type="password" placeholder="Paste your VirusTotal API key" aria-label="VirusTotal API key" hidden>
+      <textarea id="box" rows="1" placeholder="Paste an IP, domain, URL or hash" aria-label="Message"></textarea>
+      <button class="ib" id="send" aria-label="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+    </form>
+    <p class="fine">Your key is sent only to VirusTotal through this site’s relay. It is never stored on the server.</p>
+  </footer>
+</div>
+<div id="over">Drop your Excel file to check it</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ---------- severity rule (edit here) ----------
+const COUNT_SUSPICIOUS = false;   // true = count suspicious engines too
+const severity = (n) => n <= 0 ? 'Clean' : n <= 5 ? 'Medium' : n <= 10 ? 'High' : 'Critical';
+const MAX_TEXT = 100;
+
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const tagClass = (s) => ['Clean', 'Medium', 'High', 'Critical'].includes(s) ? s : 'Other';
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+// ---------- key storage ----------
+const store = (area) => { try { return window[area]; } catch { return null; } };
+let key = '';
+try { key = store('sessionStorage').getItem('vt_key') || store('localStorage').getItem('vt_key') || ''; } catch {}
+$('remember').checked = !!(store('localStorage') && store('localStorage').getItem('vt_key'));
+function saveKey(k) {
+  key = k;
+  try {
+    store('sessionStorage').removeItem('vt_key'); store('localStorage').removeItem('vt_key');
+    if (k) store($('remember').checked ? 'localStorage' : 'sessionStorage').setItem('vt_key', k);
+  } catch {}
+  syncMode();
+}
+$('remember').addEventListener('change', () => { if (key) saveKey(key); });
+
+// ---------- chat helpers ----------
+const chat = $('chat');
+const down = () => { chat.scrollTop = chat.scrollHeight; };
+function post(who) {
+  const m = el('div', 'm ' + who);
+  if (who === 'bot') m.append(el('div', 'av', 'VT'));
+  const b = el('div', 'bub'); m.append(b); chat.append(m); down();
+  return b;
+}
+const say = (text) => { const b = post('bot'); b.append(el('p', '', text)); return b; };
+const youSay = (text) => { post('user').textContent = text; };
+
+// ---------- mode: key entry vs checking ----------
+let busy = false;
+function syncMode() {
+  const need = !key;
+  $('key').hidden = !need; $('box').hidden = need; $('attach').hidden = need;
+  $('keypill').hidden = need;
+  $('send').disabled = busy;
+  (need ? $('key') : $('box')).focus();
+}
+function welcome() {
+  const b = post('bot');
+  if (!key) {
+    b.append(el('p', '', 'Hi, I check IPs, domains, URLs and file hashes on VirusTotal.'));
+    b.append(el('p', '', 'To start, paste your own VirusTotal API key below. You can find it under your VirusTotal profile.'));
+  } else {
+    b.append(el('p', '', 'Welcome back. Your key is loaded.'));
+    addHelp(b);
+  }
+}
+function addHelp(b) {
+  b.append(el('p', '', 'Send me one indicator, several (one per line), or attach an Excel file with an “indicator” column.'));
+  const c = el('div', 'chips');
+  const t = el('button', 'chipbtn', 'Download Excel template'); t.type = 'button'; t.onclick = template;
+  const s = el('button', 'chipbtn', 'How is severity decided?'); s.type = 'button';
+  s.onclick = () => { youSay('How is severity decided?'); say('I use VirusTotal’s count of engines that flag the indicator as malicious. 1–5 is Medium, 6–10 is High, above 10 is Critical, and 0 is Clean. Indicators VirusTotal has never seen show as “Not found”.'); };
+  c.append(t, s); b.append(c);
+}
+
+// ---------- API ----------
+async function vt(indicator) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await fetch('/api/vt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-VT-Key': key },
+      body: JSON.stringify({ indicator }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 429) { await sleep(60000); continue; }
+    if (!r.ok) { const e = new Error(d.error || 'Request failed (' + r.status + ')'); e.badKey = !!d.badKey; throw e; }
+    return d;
+  }
+  throw new Error('VirusTotal is still rate limiting. Lower “requests per minute” in Settings.');
+}
+function toRow(d) {
+  if (d.status === 'invalid') return { value: d.value, type: '', mal: '', sus: '', total: '', sev: 'Invalid', link: '' };
+  if (d.status === 'private') return { value: d.value, type: d.type, mal: '', sus: '', total: '', sev: 'Skipped (private IP)', link: '' };
+  if (d.status === 'notfound') return { value: d.value, type: d.type, mal: 0, sus: 0, total: 0, sev: 'Not found', link: '' };
+  const n = d.malicious + (COUNT_SUSPICIOUS ? d.suspicious : 0);
+  return { value: d.value, type: d.type, mal: d.malicious, sus: d.suspicious, total: d.total, sev: severity(n), link: d.link };
+}
+function rowEl(r) {
+  const row = el('div', 'row');
+  row.append(el('span', 'v', r.value), el('span', 'tag ' + tagClass(r.sev), r.sev));
+  if (r.total !== '') row.append(el('span', 'meta', r.mal + ' of ' + r.total + ' engines'));
+  if (r.link) { const a = el('a', 'meta', 'VirusTotal'); a.href = r.link; a.target = '_blank'; a.rel = 'noopener noreferrer'; row.append(a); }
+  return row;
+}
+
+// ---------- Excel ----------
+function parseWorkbook(wb) {
+  for (const name of wb.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '', raw: false });
+    for (let h = 0; h < Math.min(rows.length, 15); h++) {
+      const cells = rows[h].map((c) => String(c).trim().toLowerCase());
+      const ci = cells.indexOf('indicator');
+      if (ci < 0) continue;
+      const si = cells.indexOf('severity');
+      const items = [];
+      for (let i = h + 1; i < rows.length; i++) {
+        const ind = String(rows[i][ci] ?? '').trim();
+        if (ind) items.push({ ind, existing: si >= 0 ? String(rows[i][si] ?? '').trim() : '' });
+      }
+      return { items, sheet: name };
+    }
+  }
+  return null;
+}
+function saveExcel(rows, name) {
+  const aoa = [['Indicator', 'Type', 'Malicious', 'Suspicious', 'Engines', 'Severity', 'VirusTotal link']];
+  for (const r of rows) aoa.push([r.value, r.type, r.mal, r.sus, r.total, r.sev, r.link]);
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{ wch: 48 }, { wch: 9 }, { wch: 10 }, { wch: 11 }, { wch: 9 }, { wch: 20 }, { wch: 50 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Results');
+  XLSX.writeFile(wb, name + '-results.xlsx');
+}
+function template() {
+  youSay('Download Excel template');
+  const ws = XLSX.utils.aoa_to_sheet([['indicator', 'severity'], ['8.8.8.8', ''], ['example.com', ''], ['44d88612fea8a8f36de82e1278abb02f', '']]);
+  ws['!cols'] = [{ wch: 50 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Indicators');
+  XLSX.writeFile(wb, 'vt-template.xlsx');
+  say('Template downloaded. Put your indicators under “indicator”, leave “severity” empty, then attach the file here. Any other columns are ignored.');
+}
+
+// ---------- the checking loop (text and Excel share it) ----------
+let stopFlag = false;
+async function runBatch(items, { list, name }) {
+  busy = true; stopFlag = false; syncMode(); $('attach').disabled = true;
+  const b = post('bot');
+  const status = el('p', '', ''), bar = el('div', 'bar'), fill = el('div'); bar.append(fill);
+  const rowsBox = el('div');
+  const stop = el('button', 'dl stop', 'Stop and keep results so far'); stop.type = 'button';
+  stop.onclick = () => { stopFlag = true; status.textContent = 'Stopping after the current request…'; };
+  b.append(status);
+  if (items.length > 1) b.append(bar);
+  b.append(rowsBox);
+  if (items.length > 3) b.append(stop);
+
+  const skip = $('skip').checked, gap = Math.ceil(60000 / Math.max(1, +$('rpm').value || 4));
+  const cache = new Map(), rows = [], counts = {};
+  let sent = 0, failed = null;
+  try {
+    for (let i = 0; i < items.length && !stopFlag; i++) {
+      const { ind, existing } = items[i];
+      let row, fresh = false;
+      if (!list && skip && existing) row = { value: ind, type: '', mal: '', sus: '', total: '', sev: existing, link: '' };
+      else if (cache.has(ind)) row = cache.get(ind);
+      else {
+        status.textContent = 'Checking ' + (i + 1) + ' of ' + items.length + '…';
+        const d = await vt(ind);
+        row = toRow(d); cache.set(ind, row); fresh = true;
+        if (d.queried) sent++;
+        if (d.queried && i < items.length - 1) await sleep(gap);
+      }
+      rows.push(row); counts[row.sev] = (counts[row.sev] || 0) + 1;
+      if (list) { rowsBox.append(rowEl(row)); down(); }
+      fill.style.width = Math.round(((i + 1) / items.length) * 100) + '%';
+    }
+  } catch (e) { failed = e; }
+
+  stop.remove(); bar.remove();
+  status.textContent = failed
+    ? failed.message + (rows.length ? ' Kept ' + rows.length + ' finished result(s).' : '')
+    : (stopFlag ? 'Stopped. ' : 'Done. ') + rows.length + ' checked, ' + sent + ' VirusTotal request' + (sent === 1 ? '' : 's') + ' used.';
+  if (failed && failed.badKey) { saveKey(''); say('Paste a valid VirusTotal API key below to continue.'); }
+
+  if (!list && rows.length) {
+    const sum = el('div', 'sum');
+    for (const [k, n] of Object.entries(counts)) sum.append(el('span', 'tag ' + tagClass(k), k + ': ' + n));
+    b.append(sum);
+    const top = rows.filter((r) => r.sev === 'Critical' || r.sev === 'High').sort((a, c) => c.mal - a.mal).slice(0, 5);
+    if (top.length) { b.append(el('p', 'mute', 'Highest risk')); top.forEach((r) => b.append(rowEl(r))); }
+  }
+  if (rows.length) {
+    const dl = el('button', 'dl', 'Download Excel results'); dl.type = 'button';
+    dl.onclick = () => saveExcel(rows, name); b.append(dl);
+  }
+  busy = false; $('attach').disabled = false; syncMode(); down();
+}
+
+// ---------- input handling ----------
+async function handleFile(f) {
+  if (!f || busy || !key) return;
+  youSay('📎 ' + f.name);
+  let parsed;
+  try { parsed = parseWorkbook(XLSX.read(await f.arrayBuffer(), { type: 'array' })); }
+  catch (e) { return say('I could not read that file: ' + e.message); }
+  if (!parsed || !parsed.items.length) return say('I could not find an “indicator” column with data. Use the template if you need a starting point.');
+  const rpm = Math.max(1, +$('rpm').value || 4);
+  const todo = new Set(parsed.items.filter((x) => !($('skip').checked && x.existing)).map((x) => x.ind)).size;
+  const b = say('Found ' + parsed.items.length + ' indicators in “' + parsed.sheet + '”. Only the indicator column is used. At ' + rpm + ' requests per minute, ' + todo + ' lookups take about ' + Math.max(1, Math.ceil(todo / rpm)) + ' min. Keep this tab open.');
+  runBatch(parsed.items, { list: false, name: f.name.replace(/\.[^.]+$/, '') });
+}
+function handleText(text) {
+  const all = [...new Set(text.split(/[\s,;]+/).filter(Boolean))];
+  if (!all.length) return;
+  youSay(text.trim());
+  const items = all.slice(0, MAX_TEXT).map((ind) => ({ ind, existing: '' }));
+  if (all.length > MAX_TEXT) say('I’ll check the first ' + MAX_TEXT + '. For bigger lists, attach an Excel file.');
+  runBatch(items, { list: true, name: 'vt-chat' });
+}
+
+$('form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!key) {
+    const k = $('key').value.trim(); $('key').value = '';
+    if (!/^[a-f0-9]{64}$/i.test(k)) { youSay('••••••••'); return say('That doesn’t look like a VirusTotal key. It is 64 letters and numbers. Copy it again from your VirusTotal profile.'); }
+    youSay('API key added  ••••' + k.slice(-4));
+    saveKey(k);
+    const b = post('bot'); b.append(el('p', '', 'Key saved' + ($('remember').checked ? ' on this device.' : ' for this tab.'))); addHelp(b);
+    return;
+  }
+  if (busy) return;
+  const t = $('box').value; $('box').value = ''; $('box').style.height = 'auto';
+  handleText(t);
+});
+$('box').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('form').requestSubmit(); } });
+$('box').addEventListener('input', (e) => { const t = e.target; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 150) + 'px'; });
+$('attach').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', (e) => { handleFile(e.target.files[0]); e.target.value = ''; });
+$('keypill').addEventListener('click', () => { $('set').open = true; });
+$('forget').addEventListener('click', () => { saveKey(''); $('set').open = false; youSay('Forget my API key'); say('Done. Your key was removed from this browser. Paste a key below to continue.'); });
+
+// drag and drop anywhere
+let dragDepth = 0;
+addEventListener('dragenter', (e) => { if (key && !busy) { e.preventDefault(); dragDepth++; $('over').style.display = 'grid'; } });
+addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('over').style.display = 'none'; } });
+addEventListener('dragover', (e) => e.preventDefault());
+addEventListener('drop', (e) => { e.preventDefault(); dragDepth = 0; $('over').style.display = 'none'; if (key && !busy) handleFile(e.dataTransfer.files[0]); });
+
+welcome(); syncMode();
+</script>
+</body>
+</html>
